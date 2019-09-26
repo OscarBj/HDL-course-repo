@@ -30,23 +30,21 @@ begin
 end behavioral_case;
 
 
---architecture behavioral_condition of bargraph_decoder is
+architecture behavioral_condition of bargraph_decoder is
 
---begin
---process(bcd)
---    begin
---        bar_graph <= "000000000" when bcd = "0000" else
---                        "000000001" when bcd = "0001" else
---                        "000000011" when bcd = "0010" else
---                        "000000111" when bcd = "0011" else
---                        "000001111" when bcd = "0100" else
---                        "000011111" when bcd = "0101" else
---                        "000111111" when bcd = "0111" else
---                        "001111111" when bcd = "1000" else
---                        "011111111" when bcd = "1001" else
---                        "111111111";
---    end process;
+begin
+
+        bar_graph <= "000000000" when bcd = "0000" else
+                        "000000001" when bcd = "0001" else
+                        "000000011" when bcd = "0010" else
+                        "000000111" when bcd = "0011" else
+                        "000001111" when bcd = "0100" else
+                        "000011111" when bcd = "0101" else
+                        "000111111" when bcd = "0111" else
+                        "001111111" when bcd = "1000" else
+                        "011111111" when bcd = "1001" else
+                        "111111111";
 
 
---end behavioral_condition;
+end behavioral_condition;
 
