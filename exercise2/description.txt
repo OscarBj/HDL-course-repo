@@ -1,0 +1,16 @@
+Description of exercise 2 VHDL code:
+- Project consists of 2 files, tally and tally_test
+- tally contains main functionality 
+	- defines process that keeps two vectors in sensitivity list
+	- vectors contains score that are translated into integers in a loop
+	- integers are interpreted and the output is assigned
+- tally_test does verification
+	- defines two look up tables 
+	- DUT (device under test) = tally
+	- verification function 
+	- and a main process
+	- look up table 1 is for DUT
+	- look up table 2 is for verification
+	- verification function calculates the result by a simple comparison
+	- process loops trough the LUT's and tests the behavior of the DUT
+	

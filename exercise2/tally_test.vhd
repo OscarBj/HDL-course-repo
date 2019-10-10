@@ -1,11 +1,10 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
+-- Engineer: Oscar Björkgren
 -- 
 -- Create Date: 08.10.2019 18:54:54
--- Design Name: 
+-- Design Name: Exercise 2
 -- Module Name: tally_test - Behavioral
--- Project Name: 
+-- Project Name: HDL based design
 -- Target Devices: 
 -- Tool Versions: 
 -- Description: 
@@ -37,26 +36,30 @@ end tally_test;
 
 architecture Behavioral of tally_test is
     type lut_type is array(natural range <>) of std_logic_vector(2 downto 0);
+    type int_type is array(natural range <>) of integer;
     
+    -- Look up table used for input to DUT
     constant lut1: lut_type:=(
     "000",
     "001",
     "010",
-    "100",
     "011",
+    "100",
     "101",
     "110",
     "111"
     );
-    constant lut2: lut_type:=(
-    "000", -- change to 0
-    "001", -- change to 1
-    "010", -- change to 1
-    "100",
-    "011",
-    "101",
-    "110",
-    "111"
+    
+    -- Look up table used for verification
+    constant lut2: int_type:=(
+        0,
+        1,
+        1,
+        2,
+        1,
+        2,
+        2,
+        3
     );
     
     component tally
@@ -70,28 +73,16 @@ architecture Behavioral of tally_test is
     signal scoresA_test: std_logic_vector(2 downto 0);
     signal scoresB_test: std_logic_vector(2 downto 0);
     signal winner_test: std_logic_vector(1 downto 0);
-        
-    function countOnes (X: std_logic_vector) return integer
-        is
-        variable tmp:integer;
-        begin
-        tmp:=0;
-        for i in 0 to X'Length-1 loop
-            if (X(i) = '1') then tmp:= tmp+1;
-            end if;
-        end loop;
-        return tmp;
-    end countOnes;
     
-    function result (A: std_logic_vector; B: std_logic_vector; W: std_logic_vector) return std_logic
+    -- Verification function, compares the outputted winner against calculated value
+    function result (A: integer; B: integer; W: std_logic_vector) return boolean
         is
         begin
-            if(W="00" AND B = "000" AND A = "000") then return '1';
-            elsif(W="01" AND countOnes(A) > countOnes(B)) then return '1';
-			-- SHOULD BE elsif(W="01" AND A > B then return '1';, compare integers, not vectors -> different method than in tally
-            elsif(W="10" AND countOnes(A) < countOnes(B)) then return '1';
-            elsif(W="11" AND countOnes(A) = countOnes(B)) then return '1'; 
-            else return '0';
+            if(W="00" AND B = 0 AND A = 0) then return true;
+            elsif(W="01" AND A > B) then return true;
+            elsif(W="10" AND A < B) then return true;
+            elsif(W="11" AND A = B) then return true; 
+            else return false;
             end if;        
     end result;
     
@@ -105,22 +96,23 @@ begin
         variable v1: std_logic_vector(2 downto 0);
         variable v2: std_logic_vector(2 downto 0);
     begin
-        wait for 10ns;
-
+        -- Loop trough look up tables and use values for DUT
         for i in 0 to 7 loop
+        
             v1:= lut1(i);
             scoresA_test <= v1;
+            
             for j in 0 to 7 loop
-                v2:=lut2(j);
-                
-
+            
+                v2:=lut1(j);          
                 scoresB_test <= v2;
                 
                 wait for 10ns;
-                assert result(v1,v2, winner_test) = '1'
+                
+                assert result(lut2(i),lut2(j), winner_test)
                     report "result was " & to_hstring(winner_test)
                     severity error;
-                
+                             
             end loop;
         end loop;
         
