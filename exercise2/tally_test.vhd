@@ -49,9 +49,9 @@ architecture Behavioral of tally_test is
     "111"
     );
     constant lut2: lut_type:=(
-    "000",
-    "001",
-    "010",
+    "000", -- change to 0
+    "001", -- change to 1
+    "010", -- change to 1
     "100",
     "011",
     "101",
@@ -88,6 +88,7 @@ architecture Behavioral of tally_test is
         begin
             if(W="00" AND B = "000" AND A = "000") then return '1';
             elsif(W="01" AND countOnes(A) > countOnes(B)) then return '1';
+			-- SHOULD BE elsif(W="01" AND A > B then return '1';, compare integers, not vectors -> different method than in tally
             elsif(W="10" AND countOnes(A) < countOnes(B)) then return '1';
             elsif(W="11" AND countOnes(A) = countOnes(B)) then return '1'; 
             else return '0';
