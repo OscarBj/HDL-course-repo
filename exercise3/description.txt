@@ -1,0 +1,11 @@
+Description of exercise 3 VHDL code:
+- Project consists of 2 files, counter and counter_test
+- Counter contains main functionality with two architectures
+- Both models use integer variables and if statements to achieve functionality
+	- Architecture 1: counter_model1 is asynchronous
+	- It contains all entity inputs in the sensitivity list
+	- Reacts to all input signals (if ceratin restrictions are fulfilled)
+	- Output is still generated periodically according to clock
+	- Architecure 2: counter_model2 is synchronous
+	- It cointains clock and reset in the sensitivity list
+	- Reacts to clock and reset signal.
