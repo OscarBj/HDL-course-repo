@@ -31,7 +31,7 @@ architecture Behavioral of hex_counter_test is
            data : in std_logic_vector;
            digit1 : out std_logic_vector;
            digit2 : out std_logic_vector;
-           over: out STD_LOGIC
+           over: out std_logic
            );
     end component;
     
@@ -45,38 +45,34 @@ architecture Behavioral of hex_counter_test is
     -- Outputs
     signal digit1_test : std_logic_vector(d_length-1 downto 0);
     signal digit2_test : std_logic_vector(d_length-1 downto 0);
-    signal over_test : STD_LOGIC;
+    signal over_test : std_logic;
     
 begin
     DUT: hex_counter
     generic map(digit_length => d_length)
     port map(clk => clock_test, enable => enable_test, rst => reset_test, downup => downup_test, load => load_test, data => data_test, digit1 => digit1_test, digit2 => digit2_test, over => over_test);
     
+    -- Clear reset    
     reset_test<='0' after 10ns;
-    
+
     -- Generate clock signal
     clock_test <= not clock_test after 10ns;
     
     -- Loadable data
---    data_test<="00011011";
+    data_test<="00011011";
     
---    process
---    begin
---        downup_test<='1';
---        wait for 20ns;
---        reset_test<='0';
---        wait for 50ns;
---        enable_test<='1';
---        wait for 200ns;
---        load_test<='1';
---        wait for 20ns;
---        load_test<='0';
---        wait for 200ns;
---        downup_test<='0';
---        wait for 400ns;
---        reset_test<='1';
---        wait for 20ns;
---        reset_test<='0'; 
---    end process;
+    process
+    begin
+        wait for 2000ns;
+        load_test<='1';
+        wait for 20ns;
+        load_test<='0';
+        wait for 1000ns;
+        downup_test<='0';
+        wait for 1000ns;
+        enable_test<='0';
+        wait for 100ns;
+        enable_test<='1';
+    end process;
 
 end Behavioral;
