@@ -68,24 +68,48 @@ type rgb_sequence_type is array(0 to 4) of rgb_value;
     rgb_values(3),
     rgb_values(3)    
     );
+    constant off: rgb_sequence_type:=(
+    rgb_values(4),
+    rgb_values(4),
+    rgb_values(4),
+    rgb_values(4),
+    rgb_values(4)    
+    );
+    
 
-signal mode: rgb_sequence_type:= standby;
-signal rst_clk1,rst_clk2: std_logic:='1';
-signal count_clk1,count_clk2: std_logic_vector(3 downto 0) :="1111";
+signal mode: rgb_sequence_type:= off;
+signal rst_clk1: std_logic:='1';
+signal rst_clk2: std_logic:='1';
+signal count_clk1: std_logic_vector(3 downto 0) :="1111";
+signal count_clk2: std_logic_vector(3 downto 0) :="1111";
 signal r,g,b: std_ulogic_vector(7 downto 0);
 signal curr_speed: integer:=0;
-begin
-    global_time: entity work.timer_module port map(rst_clk1,count_clk1);
-    state_time: entity work.timer_module port map(rst_clk2,count_clk2);
+signal t_update: std_logic:= '0';
+signal s_time: std_logic_vector(3 downto 0):= "0000";
+signal g_t_update: std_logic:= '0';
+signal g_s_time: std_logic_vector(3 downto 0):= "0000";
+component timer_module
+port(
+    rst: in std_logic;
+    timer_update: in std_ulogic_vector;
+    count: out std_ulogic_vector;
+    timer_clk: out std_logic
+    );
+end component;
 
+begin
+    global_time: timer_module port map(rst => rst_clk1,count => count_clk1, timer_update => g_s_time, timer_clk => g_t_update);
+    state_time: timer_module port map(rst => rst_clk2,count => count_clk2, timer_update => s_time, timer_clk => t_update);
+    
     process(count_clk1,rst,alarm)
     begin
+        -- Alarm might have to be overriden by reset
         if(alarm='1') then
             mode<=alarm_sequence;
         elsif(rst='0') then
-            if(rising_edge(rst)) then
+            if(falling_edge(rst)) then
                 rst_clk1<='0';  
-                --rst_clk2<='0'; 
+ 
             end if;         
             
             if(7>to_integer(unsigned(count_clk1))) then
@@ -99,35 +123,60 @@ begin
             
         else       
             rst_clk1<='1';  
-            --rst_clk2<='1';              
+             
         end if;
     end process;     
     
     -- Loop rgb values
-    process
+--    process
+--    variable curr_value: rgb_value;
+--    begin
+--        for i in 0 to mode'length-1 loop
+--            curr_value:=mode(i);
+--            r<=std_ulogic_vector(TO_UNSIGNED(curr_value(0),8));
+--            g<=std_ulogic_vector(TO_UNSIGNED(curr_value(1),8));
+--            b<=std_ulogic_vector(TO_UNSIGNED(curr_value(2),8));
+            
+--            rst_clk2<='0';
+--            wait until curr_speed = to_integer(unsigned(count_clk2));
+--            rst_clk2<='1';
+--        end loop;    
+--    end process;
+    
+    process(mode,t_update,rst)
+    variable mode_var: rgb_sequence_type:= off;
     variable curr_value: rgb_value;
+    variable sequence_index: integer:=0;
     begin
-        for i in 0 to mode'length loop
-            curr_value:=mode(i);
+        if(rst='1') then
+            sequence_index:=0;
+            curr_value:=off(0);
+            rst_clk2<='1';
+        elsif(falling_edge(rst) OR mode/=mode_var) then
+            mode_var:=mode;
+            rst_clk2<='0';
+        elsif(rising_edge(t_update) OR mode/=mode_var) then
+            --rst_clk2<='1';       
+            sequence_index:= sequence_index +1;
+            if(sequence_index>mode_var'length-1) then
+                sequence_index:=0;
+            end if;
+            curr_value:=mode_var(sequence_index);
             r<=std_ulogic_vector(TO_UNSIGNED(curr_value(0),8));
             g<=std_ulogic_vector(TO_UNSIGNED(curr_value(1),8));
             b<=std_ulogic_vector(TO_UNSIGNED(curr_value(2),8));
-            
-            rst_clk2<='0';
-            wait until curr_speed = to_integer(unsigned(count_clk2));
-            rst_clk2<='1';
-        end loop;    
+            --rst_clk2<='0';            
+        end if; 
     end process;
-    
     -- Change Loop Speed
     process(speedmd)
     begin
         if(speedmd="01") then
-            curr_speed<=1;
+            s_time<="0001";
         elsif(speedmd="10") then
-            curr_speed<=3;
+            s_time<="0010";
         elsif(speedmd="11") then
-            curr_speed<=5;
+            s_time<="0101";
         end if;
     end process;   
 

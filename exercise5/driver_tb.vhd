@@ -7,7 +7,7 @@ end driver_tb;
 architecture tb of driver_tb is
 
 signal rst: std_logic:= '1';
-signal speed: std_logic_vector(1 downto 0):="01";
+signal speed: std_logic_vector(1 downto 0):="10"; -- ish works for 01, continue from here
 signal loopmode: std_logic:='1';
 signal alarm: std_logic:='0';
 signal r: std_logic_vector(7 downto 0);
