@@ -80,56 +80,52 @@ signal curr_speed: integer:=0;
 
 -- Timer signals: TODO make vector lengths generic, verify default values
 -- State time
-signal rst_clk1: std_logic:='1';
-signal count_clk1: std_logic_vector(3 downto 0) :="1111";
-signal timer_update: std_logic:= '0';
-signal state_time: std_logic_vector(3 downto 0):= "0000";
--- Global time -> change to timer 1 and timer 2, no global time only different timers (no counter)
 signal rst_clk2: std_logic:='1';
-signal count_clk2: std_logic_vector(3 downto 0) :="1111";
-signal g_timer_update: std_logic:= '0';
-signal g_state_time: std_logic_vector(3 downto 0):= "0000";
+signal timer2_update: std_logic:= '0';
+signal timer2_in: std_logic_vector(3 downto 0):= "0001";
+-- Global time -> change to timer 1 and timer 2, no global time only different timers (no counter)
+signal rst_clk1: std_logic:='1';
+signal timer1_update: std_logic:= '0';
+signal timer1_in: std_logic_vector(3 downto 0):= "0001";
 
 component timer_module
 port(
     rst: in std_logic;
-    timer_update: in std_ulogic_vector;
-    count: out std_ulogic_vector;
-    timer_clk: out std_logic
+    timer_in: in std_ulogic_vector;
+    timer_out: out std_logic
     );
 end component;
 
 begin
-    global_timer: timer_module port map(rst => rst_clk1,count => count_clk1, timer_update => g_state_time, timer_clk => g_timer_update);
-    state_timer: timer_module port map(rst => rst_clk2,count => count_clk2, timer_update => state_time, timer_clk => timer_update);
+    timer1: timer_module port map(rst => rst_clk2, timer_in => timer1_in, timer_out => timer1_update);
+    timer2: timer_module port map(rst => rst_clk1, timer_in => timer2_in, timer_out => timer2_update);
     
 	-- Modify this to work with new timer thingy
-    process(count_clk1,rst,alarm)
+    process(rst,alarm, loopmd)
     begin
         -- TODO: Alarm have to be overriden by reset
-        if(alarm='1') then
+        if(alarm='1' AND rst='0') then
             mode<=alarm_sequence;
         elsif(rst='0') then
-            if(falling_edge(rst)) then
-                rst_clk1<='0';  
- 
-            end if;         
-            -- Change to use timer
-            if(7>to_integer(unsigned(count_clk1))) then
+            if(falling_edge(rst) OR falling_edge(alarm)) then
+                rst_clk2<='0';
+                timer2_in<="0111";  
                 mode<=standby;
-			-- Move to separate process
-            elsif(loopmd='1') then
-                mode<=continious_rgb_sequence;
-            elsif(loopmd='0') then
-                mode<=backwards_rgb_sequence;
+            elsif(rising_edge(timer2_update)) then -- catch timer to be able to switch modes, atm we get stuck on standby bc there is not timer on it
+			     -- Move to separate process
+                if(loopmd='1') then
+                    mode<=continious_rgb_sequence;
+                elsif(loopmd='0') then
+                    mode<=backwards_rgb_sequence;
+                end if;
             end if;
-            
-            
+
         else       
-            rst_clk1<='1';  
+            rst_clk2<='1';  
              
         end if;
     end process;     
+    
     
     -- Loop rgb values
 --    process
@@ -141,14 +137,14 @@ begin
 --            g<=std_ulogic_vector(TO_UNSIGNED(curr_value(1),8));
 --            b<=std_ulogic_vector(TO_UNSIGNED(curr_value(2),8));
             
---            rst_clk2<='0';
+--            rst_clk1<='0';
 --            wait until curr_speed = to_integer(unsigned(count_clk2));
---            rst_clk2<='1';
+--            rst_clk1<='1';
 --        end loop;    
 --    end process;
     
 	-- Modify this to work with new timer thingy
-    process(mode,timer_update,rst)
+    process(mode,timer2_update,rst)
     variable mode_var: rgb_sequence_type:= off;
     variable curr_value: rgb_value;
     variable sequence_index: integer:=0;
@@ -156,11 +152,11 @@ begin
         if(rst='1') then
             sequence_index:=0;
             curr_value:=off(0);
-            rst_clk2<='1';
+            rst_clk1<='1';
         elsif(falling_edge(rst) OR mode/=mode_var) then
             mode_var:=mode;
-            rst_clk2<='0';
-        elsif(rising_edge(timer_update) OR mode/=mode_var) then       
+            rst_clk1<='0';
+        elsif(rising_edge(timer2_update) OR mode/=mode_var) then       
             sequence_index:= sequence_index +1;
             if(sequence_index>mode_var'length-1) then
                 sequence_index:=0;
@@ -171,15 +167,16 @@ begin
             b<=std_ulogic_vector(TO_UNSIGNED(curr_value(2),8));
         end if; 
     end process;
+    
     -- Change Loop Speed
     process(speedmd)
     begin
         if(speedmd="01") then
-            state_time<="0001";-- Change to accept 01, no need for the long vector
+            timer1_in<="0001";
         elsif(speedmd="10") then
-            state_time<="0010";
+            timer1_in<="0010";
         elsif(speedmd="11") then
-            state_time<="0101";
+            timer1_in<="0101";
         end if;
     end process;   
 
