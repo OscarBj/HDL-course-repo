@@ -2,14 +2,11 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+-- Each input -> separate process
+-- 1 process for main state machine
+-- Can use multiple state machines but with communication in between
+-- To make longer simulations, not changing clock freq, but state freq
+-- User defined frequency is the frequency vivado gets, no virtual hw available
 
 entity driver_module is
   Port ( 
@@ -76,18 +73,23 @@ type rgb_sequence_type is array(0 to 4) of rgb_value;
     rgb_values(4)    
     );
     
-
+-- State signals: TODO check these
 signal mode: rgb_sequence_type:= off;
-signal rst_clk1: std_logic:='1';
-signal rst_clk2: std_logic:='1';
-signal count_clk1: std_logic_vector(3 downto 0) :="1111";
-signal count_clk2: std_logic_vector(3 downto 0) :="1111";
 signal r,g,b: std_ulogic_vector(7 downto 0);
 signal curr_speed: integer:=0;
-signal t_update: std_logic:= '0';
-signal s_time: std_logic_vector(3 downto 0):= "0000";
-signal g_t_update: std_logic:= '0';
-signal g_s_time: std_logic_vector(3 downto 0):= "0000";
+
+-- Timer signals: TODO make vector lengths generic, verify default values
+-- State time
+signal rst_clk1: std_logic:='1';
+signal count_clk1: std_logic_vector(3 downto 0) :="1111";
+signal timer_update: std_logic:= '0';
+signal state_time: std_logic_vector(3 downto 0):= "0000";
+-- Global time -> change to timer 1 and timer 2, no global time only different timers (no counter)
+signal rst_clk2: std_logic:='1';
+signal count_clk2: std_logic_vector(3 downto 0) :="1111";
+signal g_timer_update: std_logic:= '0';
+signal g_state_time: std_logic_vector(3 downto 0):= "0000";
+
 component timer_module
 port(
     rst: in std_logic;
@@ -98,12 +100,13 @@ port(
 end component;
 
 begin
-    global_time: timer_module port map(rst => rst_clk1,count => count_clk1, timer_update => g_s_time, timer_clk => g_t_update);
-    state_time: timer_module port map(rst => rst_clk2,count => count_clk2, timer_update => s_time, timer_clk => t_update);
+    global_timer: timer_module port map(rst => rst_clk1,count => count_clk1, timer_update => g_state_time, timer_clk => g_timer_update);
+    state_timer: timer_module port map(rst => rst_clk2,count => count_clk2, timer_update => state_time, timer_clk => timer_update);
     
+	-- Modify this to work with new timer thingy
     process(count_clk1,rst,alarm)
     begin
-        -- Alarm might have to be overriden by reset
+        -- TODO: Alarm have to be overriden by reset
         if(alarm='1') then
             mode<=alarm_sequence;
         elsif(rst='0') then
@@ -111,9 +114,10 @@ begin
                 rst_clk1<='0';  
  
             end if;         
-            
+            -- Change to use timer
             if(7>to_integer(unsigned(count_clk1))) then
                 mode<=standby;
+			-- Move to separate process
             elsif(loopmd='1') then
                 mode<=continious_rgb_sequence;
             elsif(loopmd='0') then
@@ -143,7 +147,8 @@ begin
 --        end loop;    
 --    end process;
     
-    process(mode,t_update,rst)
+	-- Modify this to work with new timer thingy
+    process(mode,timer_update,rst)
     variable mode_var: rgb_sequence_type:= off;
     variable curr_value: rgb_value;
     variable sequence_index: integer:=0;
@@ -155,8 +160,7 @@ begin
         elsif(falling_edge(rst) OR mode/=mode_var) then
             mode_var:=mode;
             rst_clk2<='0';
-        elsif(rising_edge(t_update) OR mode/=mode_var) then
-            --rst_clk2<='1';       
+        elsif(rising_edge(timer_update) OR mode/=mode_var) then       
             sequence_index:= sequence_index +1;
             if(sequence_index>mode_var'length-1) then
                 sequence_index:=0;
@@ -165,18 +169,17 @@ begin
             r<=std_ulogic_vector(TO_UNSIGNED(curr_value(0),8));
             g<=std_ulogic_vector(TO_UNSIGNED(curr_value(1),8));
             b<=std_ulogic_vector(TO_UNSIGNED(curr_value(2),8));
-            --rst_clk2<='0';            
         end if; 
     end process;
     -- Change Loop Speed
     process(speedmd)
     begin
         if(speedmd="01") then
-            s_time<="0001";
+            state_time<="0001";-- Change to accept 01, no need for the long vector
         elsif(speedmd="10") then
-            s_time<="0010";
+            state_time<="0010";
         elsif(speedmd="11") then
-            s_time<="0101";
+            state_time<="0101";
         end if;
     end process;   
 

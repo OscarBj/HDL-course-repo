@@ -9,9 +9,9 @@ entity timer_module is
   );  
   Port ( 
     rst: in std_logic;
-    timer_update: in std_ulogic_vector(clk_limit'Length-1 downto 0);
+    timer_in: in std_ulogic_vector(clk_limit'Length-1 downto 0);
     count: out std_ulogic_vector(clk_limit'Length-1 downto 0);
-    timer_clk: out std_logic
+    timer_out: out std_logic
     );
 end timer_module;
 
@@ -31,7 +31,36 @@ begin
         wait for clk_low;
     end process;
     
-    process(timer_update, count, rst)
+	-- TODO: skip the count stuff, this forces handling and reseting the count vector
+	-- Instead, only use timer; Remove continuous clock (global clock) and only use two timers when needed (alarm state)
+	-- Timer could be defined in ms, but the input can be seconds to be able to minimize input vector size and still be able to 
+	-- divide timer into clock cycle without loosing precision
+	
+	process(timer_in, clk, rst)
+	variable update_time: integer:=0;
+	variable next_update: integer:=0;
+	
+	begin
+		if(rst='1') then
+			t:=0;
+			update_time:=0;
+			next_update:=-1; -- To prevent triggering update for timer_out
+		
+		elsif(next_update=0) then
+			timer_out<= not timer_out;
+			next_update:=update_time/2; -- NOTE: this makes the timer signal continious, could also be reset here
+		
+		elsif(rising_edge(clk)) then
+			next_update:=next_update-1;
+		
+		elsif(update_time/=to_integer(unsigned(timer_in))) then
+			update_time:=to_integer(unsigned(timer_in))*10; -- sec to 1/10 sec
+			next_update:=update_time/2; -- no precision lost bc conversion ^^ NOTE: ADJUST THE CLOCK SPEED ACCORDINGLY
+			
+		end if;
+	end process;
+	
+    process(timer_in, count, rst)
     variable prev_count: std_ulogic_vector(clk_limit'Length-1 downto 0);
     variable update_int: integer:=0;
     variable update_high: integer:=0;
@@ -46,9 +75,9 @@ begin
             update_high:=0;
             update_low:=0;
             next_update:=0;
-            timer_clk<='0'; -- requires a reset before functioning 
-        elsif(update_int/=to_integer(unsigned(timer_update)) AND timer_update<=clk_limit) then
-            update_int:=to_integer(unsigned(timer_update));
+            timer_out<='0'; -- requires a reset before functioning 
+        elsif(update_int/=to_integer(unsigned(timer_in)) AND timer_in<=clk_limit) then
+            update_int:=to_integer(unsigned(timer_in));
             update_high:=update_int/2;
             update_low:=update_int-update_high;
             next_update:=update_high;
@@ -58,7 +87,7 @@ begin
             prev_count:=count;
         end if;
         if(active AND next_update>=0) then
-            timer_clk<=not timer_clk;
+            timer_out<=not timer_out;
             if(next_update=update_high) then
                 next_update:=update_low;
             elsif(next_update=update_low) then
