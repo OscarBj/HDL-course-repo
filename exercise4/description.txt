@@ -1,0 +1,26 @@
+HDL Exercise 4: Multi-Process sequential logic in a 2-digit hex counter
+- 2 digit (8 bit) hexadecimal counter implementation
+- Inputs: reset, enable, load, down/up, data
+- Outputs: digit 1, digit 2, over
+- The counter counts up or down, loads data and resets
+- Over will output 1 when there is over/underflow on the counter
+
+
+Description of exercise 4 VHDL code:
+- Project consists of 2 files, hex_counter and hex_counter_test
+- hex_counter contains counter functionality
+	- The architecture contains two processes
+	- The Combinatorial process responsibility is handling most of the inputs
+		- Counting, loading, over- and underflow, count direction
+		
+	- The Register process responsibility is handling clock and reset events
+		- Writing counted values, over- and underflow, and resets to output
+		
+- hex_counter_test acts as testbench
+	- Contains test signals that are manipulated to verify correct behaviour of the system
+	- Screenshots are attached to show how system reacted to different parameters
+		- "count_down" shows normal count down, right side of the image shows a underflow being raised 
+		- "count up" shows normal count up, right side of the image shows a overflow being raised
+		- "count_load" shows load of data 1b and counter going down
+		- "counter_reset" shows reset event in the left and right side of the image		
+	

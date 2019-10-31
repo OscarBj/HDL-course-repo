@@ -1,0 +1,48 @@
+HDL Exercise 5: State machine for Led driver
+- Contains states that maps to different led output beahviour
+- The output consits of an RGB value
+- A state defines paramters such as state duration, led color duration and RGB value
+- Each color maps to a value between 0 and 255
+	
+	The driver will have four inputs:
+	- A reset button that will go back to the STANDBY state and default settings.
+	- A speed control button to iterate through the three different speed modes.
+	- An iteration control button that will change from continuous loop mode (RED after
+		PURPLE) to backwards loop mode (BLUE after PURPLE, GREEN after BLUE and so on).
+		Note that in both modes YELLOW always goes after RED.
+	- An alarm button that will trigger a 7 seconds alarm state. During this state, the
+		LED will blink at a frequency 10 times faster (with respect to the frequency it had
+		when the alarm was triggered). The LED color during the alarm is WHITE
+		
+- Continious loop state: RED – YELLOW – GREEN – BLUE - PURPLE (backwards: R->Y->P->B->G)
+- Color duration is defined by input, state duration is defined by color duration times the number of states
+- Standby: White, for 4 seconds
+
+Description of exercise 5 VHDL code:
+- Project consists of 3 files, driver_module, timer_module and driver_tb
+
+- driver_module contains led driver functionality
+	- 5 states are defined: off, alarm, standby, continious and backwards
+	- These corresponds to rgb values which are used for assigning the output
+	- Two processes manages states and the overall behaviour
+		- System state is controlled by one process
+		- Led state is controlled by the other process
+	- One process for reacting to speed input
+	- Separate processes for each RGB value
+	
+- timer_module countains timer functionality
+	- The timer contains a general clock (125MHz) that is used for creating timed outputs
+	- The timer output is a separate clock signal -> timer value corresponds to one period of the timer clock signal
+	- The timer reacts to alarm so that the timer output increases its frequency by a factor of 10
+
+- driver_tb acts as testbench for the led driver
+	- Contains test signals that are manipulated to verify correct behaviour of the system
+	- Screenshots are included to show how system reacted to different parameters
+		- "alarm_demo" shows how the system reacts when alarm input goes from 0 to 1
+			- the alarm state lasts 7 seconds and then goes to standby			
+		- "loop_speed_mode_demo" shows the system reacting to changes in speed and loop mode
+			- at 290ns, speed changes from "1s" (10ns) to "3s" (30ns)
+			- at 390ns, speed changes from "3s" to "5s" (50ns)
+			- at 490ns, loop mode changes from continious to backwards
+
+	
