@@ -4,11 +4,12 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity timer_module is
   generic(
-    clk_div: time:=1250 ms/2; -- > period = 10ns
+    clk_div: time:=1250 ms/2; 
     clk_limit: std_logic_vector:= "1111"
   );  
   Port ( 
     rst: in std_logic;
+    alrm: in std_logic;
     timer_in: in std_ulogic_vector(clk_limit'Length-1 downto 0);
     timer_out: out std_logic
     );
@@ -17,11 +18,14 @@ end timer_module;
 architecture Behavioral of timer_module is
 signal clk: std_logic;
 constant clk_freq: real:= 125.000E6;
-constant clk_period: time:=clk_div/clk_freq; -- time interval for one clock period
-constant clk_high: time:= clk_period/2;
-constant clk_low: time:= clk_period-clk_high;
-constant clk_len: integer:=clk_limit'length;
+constant clk_period: time:=(clk_div/clk_freq)/10; -- time interval for one clock period
+
+signal clk_high: time:= clk_period/2;
+signal clk_low: time:= clk_period-clk_high;
+
 begin
+    
+    -- Clock signal
     process
     begin
         clk<='1';
@@ -30,14 +34,26 @@ begin
         wait for clk_low;
     end process;
     
-	process(timer_in, clk, rst)
+    -- Generate timer clock signal
+	process(timer_in, clk, rst, alrm)
 	variable update_time: integer:=0;
 	variable next_update: integer:=0;
-	
 	begin
-        if(update_time/=to_integer(unsigned(timer_in))) then
+	   -- Alarm state -> timer clk is 10 times faster
+        if(rising_edge(alrm)) then
+            update_time:=update_time/10;
+            next_update:=0;
+            timer_out<='0';
+        -- Normal state
+        elsif(falling_edge(alrm)) then
+            update_time:=update_time*10;
+            next_update:=0;
+        -- Timer input changed
+        elsif(update_time/=to_integer(unsigned(timer_in))*10 AND alrm='0') then
             update_time:=to_integer(unsigned(timer_in));
-            next_update:=update_time-1; -- set to high on this cycle
+            update_time:=update_time*10;
+            next_update:=0;
+            timer_out<='0'; -- set to low on this cycle
             if(update_time<1) then
                 update_time:=1;
             end if;   
@@ -47,10 +63,12 @@ begin
 			next_update:=0; 
 		    timer_out<='0';
 		else
+		    -- After reset
             if(falling_edge(rst)) then
-                timer_out<='1'; -- default is 1 (10 ns)
-                update_time:=1;
+                timer_out<='0'; -- set low by default
+                update_time:=1; -- default is 1 (10 ns)
                 next_update:=0;
+            -- Timer clk 
             elsif(rising_edge(clk)) then
                 next_update:= next_update+1;
                 if(next_update=update_time) then
