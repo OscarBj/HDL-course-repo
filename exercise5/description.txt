@@ -1,4 +1,24 @@
 HDL Exercise 5: State machine for Led driver
+- Contains states that maps to different led output beahviour
+- The output consits of an RGB value
+- A state defines paramters such as state duration, led color duration and RGB value
+- Each color maps to a value between 0 and 255
+	
+	The driver will have four inputs:
+	- A reset button that will go back to the STANDBY state and default settings.
+	- A speed control button to iterate through the three different speed modes.
+	- An iteration control button that will change from continuous loop mode (RED after
+		PURPLE) to backwards loop mode (BLUE after PURPLE, GREEN after BLUE and so on).
+		Note that in both modes YELLOW always goes after RED.
+	- An alarm button that will trigger a 7 seconds alarm state. During this state, the
+		LED will blink at a frequency 10 times faster (with respect to the frequency it had
+		when the alarm was triggered). The LED color during the alarm is WHITE
+		
+- Continious loop state: RED – YELLOW – GREEN – BLUE - PURPLE (backwards: R->Y->P->B->G)
+- Color duration is defined by input, state duration is defined by color duration times the number of states
+- Standby: White, for 4 seconds
+
+Description of exercise 5 VHDL code:
 - Project consists of 3 files, driver_module, timer_module and driver_tb
 
 - driver_module contains led driver functionality

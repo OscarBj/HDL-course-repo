@@ -1,0 +1,10 @@
+HDL Exercise 1: BCD to bargraph decoder
+- The inputs represent a binary value between 0 and 9
+- The output consits of a 9 bit long vector, where every bit corresponds to a "led"
+- If a led is turned on the output for that bit is 1, otherwise 0
+- Input number maps to the number of leds that are on
+
+- Project consists of 2 files, bargraph_decoder and bargraph_decoder_test
+- bargraph_decoder contains two implementations of the decoder funcitonality
+- bargraph_decoder_test acts as a testbench
+	- Contains test signals that are manipulated to verify correct behaviour of the system

@@ -1,3 +1,8 @@
+HDL Exercise 2: Loop based combination logic
+- Scoring system for a game with 2 opponents
+- The inputs are the points for each player
+- The output is the winner
+
 Description of exercise 2 VHDL code:
 - Project consists of 2 files, tally and tally_test
 - tally contains main functionality 

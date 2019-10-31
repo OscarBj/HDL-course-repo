@@ -1,3 +1,11 @@
+HDL Exercise 4: Multi-Process sequential logic in a 2-digit hex counter
+- 2 digit (8 bit) hexadecimal counter implementation
+- Inputs: reset, enable, load, down/up, data
+- Outputs: digit 1, digit 2, over
+- The counter counts up or down, loads data and resets
+- Over will output 1 when there is over/underflow on the counter
+
+
 Description of exercise 4 VHDL code:
 - Project consists of 2 files, hex_counter and hex_counter_test
 - hex_counter contains counter functionality

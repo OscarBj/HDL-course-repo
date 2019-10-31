@@ -1,3 +1,10 @@
+HDL Exercise 3: Design, Simulation and Synthesis of sequential logic
+- 4 bit counter implementation
+- Inputs: reset, enable, load, down/up, data
+- Outputs: count, over
+- The counter counts up or down, loads data and resets
+- Over will output 1 when there is over/underflow on the counter
+
 Description of exercise 3 VHDL code:
 - Project consists of 2 files, counter and counter_test
 - Counter contains main functionality with two architectures
