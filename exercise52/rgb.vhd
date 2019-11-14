@@ -32,7 +32,9 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity rgb is
-    Port ( a : in STD_LOGIC;
+    Port (
+           clk: in std_logic;
+           a : in STD_LOGIC;
            b : in STD_LOGIC;
            c : in STD_LOGIC;
            d : in STD_LOGIC;
@@ -44,9 +46,18 @@ end rgb;
 architecture Behavioral of rgb is
 
 begin
+    process(clk)
+    begin
+        if(clk='1') then
+            rr<=a and b;
+            gg<=b and c;
+            bb<=c and d;
+        else 
+            rr<='0';
+            gg<='0';
+            bb<='0';
+        end if;
+    end process;
 
-    rr<=a and b;
-    gg<=b and c;
-    bb<=c and d;
 
 end Behavioral;

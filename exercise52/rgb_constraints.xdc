@@ -5,9 +5,12 @@
 ## - rename the used ports (in each line, after get_ports) according to the top level signal names in the project
 
 ##Clock signal
-#set_property -dict { PACKAGE_PIN K17   IOSTANDARD LVCMOS33 } [get_ports { sysclk }]; #IO_L12P_T1_MRCC_35 Sch=sysclk
-#create_clock -add -name sys_clk_pin -period 8.00 -waveform {0 4} [get_ports { sysclk }];
+set_property -dict { PACKAGE_PIN K17   IOSTANDARD LVCMOS33 } [get_ports { sysclk }]; #IO_L12P_T1_MRCC_35 Sch=sysclk
+create_clock -add -name sys_clk_pin -period 8.00 -waveform {0 4} [get_ports { sysclk }];
 
+#set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets sw_IBUF[0]];
+#set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets sw_IBUF[1]];
+#set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets sw_IBUF_BUFG[1]];
 
 ##Switches
 set_property -dict { PACKAGE_PIN G15   IOSTANDARD LVCMOS33 } [get_ports { sw[0] }]; #IO_L19N_T3_VREF_35 Sch=sw[0]
