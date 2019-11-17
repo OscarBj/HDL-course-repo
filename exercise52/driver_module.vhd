@@ -11,7 +11,9 @@ use IEEE.NUMERIC_STD.ALL;
 entity driver_module is                              
   generic(                                        -- 0000000010011000100101101000- 0.1s
     timer_vector: std_ulogic_vector(27 downto 0):=  "0000010111110101111000010000";  --"00000011111110010100000010101010"; -- 1 sec "00000111011100110101100101000000"
+    sec3: std_ulogic_vector(27 downto 0):=          "0001000111100001101000110000";
     sec4: std_ulogic_vector(27 downto 0):=          "0001011111010111100001000000";          --"00001111111001010000001010101010"; -- 4 sec "00011101110011010110010100000000"
+    sec5: std_ulogic_vector(27 downto 0):=          "0001110111001101011001010000";
     sec7: std_ulogic_vector(27 downto 0):=          "0010100110111001001001110000"          --"00011011110100001100010010101010"  -- 7 sec "00110100001001110111000011000000"
   );
   Port ( 
@@ -131,6 +133,7 @@ process(rst,alarm,timer2_update)
             
             rst_clk1<='0';
             timer1_alarm<='0';
+            current_state<=state;
         elsif(alarm='1' and prev_alrm='0') then
             prev_rst:='0';
             prev_alrm:='1';
@@ -138,8 +141,9 @@ process(rst,alarm,timer2_update)
             timer2_in<=sec7;
             rst_clk2<='0';           
 
-            rst_clk1<='0';
+            --rst_clk1<='1';
             timer1_alarm<='1';
+            current_state<=state;
         elsif(falling_edge(timer2_update)) then
             prev_alrm:='0';
             prev_rst:='0';
@@ -154,8 +158,10 @@ process(rst,alarm,timer2_update)
             
             rst_clk1<='0';
             timer1_alarm<='0';
+            current_state<=state;
         end if;
-        current_state<=state;
+        --current_state<=state;
+        
 --        if(rst='1') then
         
 ----            if(current_state/=standby_state) then
@@ -194,7 +200,9 @@ process(rst,alarm,timer2_update)
     
     process(current_state, timer1_update)
     variable rgb_index: integer:=0;
+    variable alrm_index: integer:=0; -- use separate indecies for rgb and alrm
     variable rgb: rgb_value:=(0,0,0);
+    variable alrm: rgb_value:=(0,0,0);
     begin
         if(current_state=off_state) then
             r<="00000000";
@@ -204,86 +212,99 @@ process(rst,alarm,timer2_update)
             r<="11111111";
             g<="11111111";
             b<="11111111";
-        elsif(current_state=alarm_state) then
---            if(falling_edge(timer1_update)) then
---                if(rgb_index>=alarm_sequence'length) then
---                    rgb_index:=0;
---                    rgb:=alarm_sequence(rgb_index);
---                    r<=std_ulogic_vector(TO_UNSIGNED(rgb(0),8)); 
---                    g<=std_ulogic_vector(TO_UNSIGNED(rgb(1),8));
---                    b<=std_ulogic_vector(TO_UNSIGNED(rgb(2),8));
---                    rgb_index:=rgb_index+1;
---                else
---                    rgb:=alarm_sequence(rgb_index);
---                    r<=std_ulogic_vector(TO_UNSIGNED(rgb(0),8)); 
---                    g<=std_ulogic_vector(TO_UNSIGNED(rgb(1),8));
---                    b<=std_ulogic_vector(TO_UNSIGNED(rgb(2),8));
---                    rgb_index:=rgb_index+1;
---                end if;
---          end if;
-            if(timer1_update='1') then
-                r<="11111111";
-                g<="11111111";
-                b<="11111111";
-            else
-                r<="00000000";
-                g<="00000000";
-                b<="00000000";
-            end if;
         elsif(falling_edge(timer1_update)) then
             if(current_state=alarm_state) then
-                if(rgb_index>=alarm_sequence'length) then
-                    rgb_index:=0;
-                    rgb:=alarm_sequence(rgb_index);
-                    r<=std_ulogic_vector(TO_UNSIGNED(rgb(0),8)); 
-                    g<=std_ulogic_vector(TO_UNSIGNED(rgb(1),8));
-                    b<=std_ulogic_vector(TO_UNSIGNED(rgb(2),8));
-                    rgb_index:=rgb_index+1;
+                if(alrm_index>=alarm_sequence'length) then
+                    alrm_index:=0;
+                    alrm:=alarm_sequence(alrm_index);
+                    r<=std_ulogic_vector(TO_UNSIGNED(alrm(0),8)); 
+                    g<=std_ulogic_vector(TO_UNSIGNED(alrm(1),8));
+                    b<=std_ulogic_vector(TO_UNSIGNED(alrm(2),8));
+                    alrm_index:=alrm_index+1;
                 else
-                    rgb:=alarm_sequence(rgb_index);
-                    r<=std_ulogic_vector(TO_UNSIGNED(rgb(0),8)); 
-                    g<=std_ulogic_vector(TO_UNSIGNED(rgb(1),8));
-                    b<=std_ulogic_vector(TO_UNSIGNED(rgb(2),8));
-                    rgb_index:=rgb_index+1;
+                    alrm:=alarm_sequence(alrm_index);
+                    r<=std_ulogic_vector(TO_UNSIGNED(alrm(0),8)); 
+                    g<=std_ulogic_vector(TO_UNSIGNED(alrm(1),8));
+                    b<=std_ulogic_vector(TO_UNSIGNED(alrm(2),8));
+                    alrm_index:=alrm_index+1;
                 end if;
             elsif(current_state=continious_state OR current_state=backwards_state) then    
-                if(rgb_index>=continious_state'length) then
-                    rgb_index:=0;
-                    rgb:=continious_rgb_sequence(rgb_index);
-                    r<=std_ulogic_vector(TO_UNSIGNED(rgb(0),8)); 
-                    g<=std_ulogic_vector(TO_UNSIGNED(rgb(1),8));
-                    b<=std_ulogic_vector(TO_UNSIGNED(rgb(2),8));   
-                    rgb_index:=rgb_index+1;
-                elsif(loopmd='0') then
-                    rgb:=continious_rgb_sequence(rgb_index);
-                    r<=std_ulogic_vector(TO_UNSIGNED(rgb(0),8)); 
-                    g<=std_ulogic_vector(TO_UNSIGNED(rgb(1),8));
-                    b<=std_ulogic_vector(TO_UNSIGNED(rgb(2),8));   
-                    rgb_index:=rgb_index+1;     
-                elsif(loopmd='1') then
-                    rgb:=backwards_rgb_sequence(rgb_index);
-                    r<=std_ulogic_vector(TO_UNSIGNED(rgb(0),8)); 
-                    g<=std_ulogic_vector(TO_UNSIGNED(rgb(1),8));
-                    b<=std_ulogic_vector(TO_UNSIGNED(rgb(2),8));   
-                    rgb_index:=rgb_index+1; 
+                    if(rgb_index>=continious_state'length) then
+                        rgb_index:=0;
+                        rgb:=continious_rgb_sequence(rgb_index);
+                        r<=std_ulogic_vector(TO_UNSIGNED(rgb(0),8)); 
+                        g<=std_ulogic_vector(TO_UNSIGNED(rgb(1),8));
+                        b<=std_ulogic_vector(TO_UNSIGNED(rgb(2),8));   
+                        rgb_index:=rgb_index+1;
+                    elsif(loopmd='0') then
+                        rgb:=continious_rgb_sequence(rgb_index);
+                        r<=std_ulogic_vector(TO_UNSIGNED(rgb(0),8)); 
+                        g<=std_ulogic_vector(TO_UNSIGNED(rgb(1),8));
+                        b<=std_ulogic_vector(TO_UNSIGNED(rgb(2),8));   
+                        rgb_index:=rgb_index+1;     
+                    elsif(loopmd='1') then
+                        rgb:=backwards_rgb_sequence(rgb_index);
+                        r<=std_ulogic_vector(TO_UNSIGNED(rgb(0),8)); 
+                        g<=std_ulogic_vector(TO_UNSIGNED(rgb(1),8));
+                        b<=std_ulogic_vector(TO_UNSIGNED(rgb(2),8));   
+                        rgb_index:=rgb_index+1; 
+                    end if;
                 end if;
             end if;
-        end if;
     end process;
 
     -- Change Loop Speed
     process(speedmd, rst)
-    variable speed:std_logic:='0';
+    variable speed: integer:=0;
+    variable md:std_logic:='0';
     begin
-
+        if(rst='1') then
+            timer1_in<=timer_vector;
+            --speed:=speedmd;
+--        elsif(speedmd/=speed) then
+        else 
+            if(speedmd='0') then
+                timer1_in<=timer_vector;
+                
+            elsif(speedmd='1') then
+                timer1_in<=sec3;
+                
+            end if;
+            --end if;
+            
+--            if(md+1>2) then
+--                md:=0;
+--                timer1_in<=timer_vector;
+--            else
+--                if(md=0) then
+--                    timer1_in<=timer_vector;
+--                    md:=md+1;
+--                    speed:=speedmd;
+--                elsif(md=1) then
+--                    timer1_in<=sec3;
+--                    md:=md+1;
+--                    speed:=speedmd;
+--                elsif(md=2) then
+--                    timer1_in<=sec5;
+--                    md:=md+1;
+--                    speed:=speedmd;
+--            end if;
+        end if;
+        
 --        if((speed='0' and speedmd='1') OR rst='1') then
+
 --            speed:=speedmd;
 --            timer1_in<= timer_vector; -- 1 sec 
+
 --        elsif(speed='1' and speedmd='0') then
+
 --            timer1_in<= "0001000111100001101000110000";--"00001011111010111100001000000000"; -- 3 sec 00010110010110100000101111000000
+
 --        elsif(speed='1' and speedmd='1') then
 --            speed:='0';
+
 --            timer1_in<= "0001110111001101011001010000";--"00010011110111100100001101010101"; -- 5 sec 00100101010000001011111001000000
+
 --        end if;
 
     end process;   

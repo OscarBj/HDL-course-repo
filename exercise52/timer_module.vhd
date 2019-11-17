@@ -16,9 +16,16 @@ entity timer_module is
 end timer_module;
 
 architecture Behavioral of timer_module is
-
+--signal update_t: integer:=0;
 begin
-    
+--    process(alrm, timer_in)
+--    variable t_in: std_ulogic_vector(timer_limit'Length-1 downto 0):=timer_limit;
+--    begin
+--        if(timer_in/=t_in) then
+--            update_t<=to_integer(unsigned(timer_in))*10;
+--            t_in:=timer_in;
+--        end if;
+--    end process;
     -- Generate timer clock signal
 	process(timer_in, clock, rst, alrm)
 	variable update_time: integer:=0;
